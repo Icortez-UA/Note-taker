@@ -1,17 +1,19 @@
 // Dependencies
 // =============================================================
-var express = require("express");
-var path = require("path");
-var fs = require("fs");
-
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
+const db = require("./db/db.json");
+const uuid = require("uuid/v4");
 // Sets up the Express App
 // =============================================================
-var app = express();
-var PORT = process.env.PORT || 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
+// set this up to use assets
 app.use("/public",express.static(path.join(__dirname, '/public')));
 //routes
 
@@ -26,15 +28,46 @@ app.get("/notes", function(req, res) {
 
 
 app.get("/api/notes",function(req,res){
-   fs.readFile("./db/db.json","utf8",function(error, data) {
+  res.send(db);
+});
 
-    if (error) {
-      return console.log(error);
-    }
-  
-    return console.log(data);
-  
+app.post("/api/notes",function(req,res){
+
+  let noteId = uuid();
+  let newNote = {
+    id: noteId,
+    title: req.body.title,
+    text: req.body.text
+  };
+
+  fs.readFile("./db/db.json","utf8",(err,data) =>{
+    if (err) throw err;
+    const savedNotes = JSON.parse(data);
+    
+    savedNotes.push(newNote);
+
+    fs.writeFile("./db/db.json", JSON.stringify(savedNotes, null, 2), err => {
+      if (err) throw err;
+      res.send(db);
+      console.log("Note created!")
+    });
   });
+});
+ 
+app.delete("/api/notes/:id",function(req,res){
+    let noteId = req.params.id;
+
+    fs.readFile("./db/db.json","utf8",(err,data)=>{
+      if(err) throw err;
+      const savedNotes = JSON.parse(data);
+      const newAllNotes = savedNotes.filter(note => note.id != noteId);
+
+      fs.writeFile("./db/db.json", JSON.stringify(newAllNotes, null, 2), err => {
+        if (err) throw err;
+        res.send(db);
+        console.log("Note deleted!")
+      });
+    });
 });
 
   app.listen(PORT, function() {
