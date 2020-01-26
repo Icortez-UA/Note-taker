@@ -28,8 +28,17 @@ app.get("/notes", function(req, res) {
 
 
 app.get("/api/notes",function(req,res){
-  res.send(db);
+  fs.readFile("./db/db.json", "utf8", function (err, data) {
+
+    if (err) throw err;
+
+    let storedNotes = JSON.parse(data);
+
+    res.json(storedNotes);
 });
+
+});
+
 
 app.post("/api/notes",function(req,res){
 
@@ -48,10 +57,10 @@ app.post("/api/notes",function(req,res){
 
     fs.writeFile("./db/db.json", JSON.stringify(savedNotes, null, 2), err => {
       if (err) throw err;
-      res.send(db);
       console.log("Note created!")
     });
   });
+  res.send(db);
 });
  
 app.delete("/api/notes/:id",function(req,res){
@@ -64,10 +73,10 @@ app.delete("/api/notes/:id",function(req,res){
 
       fs.writeFile("./db/db.json", JSON.stringify(newAllNotes, null, 2), err => {
         if (err) throw err;
-        res.send(db);
         console.log("Note deleted!")
       });
     });
+    res.send(db);
 });
 
   app.listen(PORT, function() {
